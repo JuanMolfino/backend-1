@@ -233,17 +233,18 @@ app.put("/api/clientes/:id", (req, res) => {
   if (genero !== undefined) cliente.genero = genero;
   return res.status(200).json({ modificado: true, cliente });
 });
-//deletes
-app.delete("/api/clientes/deleted/id", (req,res)=>{
+//deletes (soft delete)
+app.delete("/api/clientes/deleted/:id", (req, res) => {
   const { id } = req.params;
   const clienteIndex = clientes.findIndex((c) => c.id === parseInt(id));
-  const cliente = clientes[clienteIndex];
   if (clienteIndex === -1) {
-    cliente[clienteIndex].deleted= true;
-    return res.status(200).json({ eliminado: true, cliente });
-  }else{
-    res.status(404).json({erorr : "cliente no encontrado"})
+    return res.status(404).json({ error: "cliente no encontrado" });
   }
+  if (clientes[clienteIndex].deleted) {
+    return res.status(200).json({ eliminado: false, mensaje: "cliente ya eliminado", cliente: clientes[clienteIndex] });
+  }
+  clientes[clienteIndex].deleted = true;
+  return res.status(200).json({ eliminado: true, cliente: clientes[clienteIndex] });
 })
 //ejecucion del servidor
 app.listen(PORT, () => {
