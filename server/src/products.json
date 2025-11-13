@@ -1,0 +1,8 @@
+[
+  { "id": 1, "marca": "Ferrari", "modelo": "488 Spider", "año": 2020, "precio": 250000 },
+  { "id": 2, "marca": "Lamborghini", "modelo": "Huracan EVO", "año": 2021, "precio": 300000 },
+  { "id": 3, "marca": "Porsche", "modelo": "911 Turbo S", "año": 2019, "precio": 150000 },
+  { "id": 4, "marca": "Range Rover", "modelo": "Velar", "año": 2020, "precio": 90000 },
+  { "id": 5, "marca": "Jeep", "modelo": "Grand Cherokee", "año": 2021, "precio": 75000 },
+  { "id": 6, "marca": "Toyota", "modelo": "Land Cruiser", "año": 2019, "precio": 85000 }
+]

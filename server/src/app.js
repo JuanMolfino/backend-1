@@ -1,24 +1,14 @@
-const e = require("express");
 const express = require("express");
 const app = express();
 const PORT = 8080;
 
-
-//midlewares
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//voy a simular una concesionaria de autos
-const db_deportivos = [
-  { id: 1, marca: "Ferrari", modelo: "488 Spider", año: 2020, precio: 250000 },
-  { id: 2, marca: "Lamborghini", modelo: "Huracan EVO", año: 2021, precio: 300000,},
-  { id: 3, marca: "Porsche", modelo: "911 Turbo S", año: 2019, precio: 150000 },
-];
-const db_suv = [
-  { id: 1, marca: "Range Rover", modelo: "Velar", año: 2020, precio: 90000 },
-  { id: 2, marca: "Jeep", modelo: "Grand Cherokee", año: 2021, precio: 75000 },
-  { id: 3, marca: "Toyota", modelo: "Land Cruiser", año: 2019, precio: 85000 },
-];
+// Importar routers
+const apiRouter = require("./routes");
+app.use("/api", apiRouter);
 const style = ` body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
@@ -142,6 +132,7 @@ const clientes = [
 ];
 //interacciones ocn el server
 //gets
+//TODO: router de clientes
 app.get("/", (req, res) => {
   try{
   res.status(200).send(html)
