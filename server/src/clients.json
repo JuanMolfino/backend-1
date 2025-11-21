@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "nombre": "María González",
+    "email": "maria.gonzalez@gmail.com",
+    "edad": 28,
+    "genero": "Femenino",
+    "deleted": false
+  },
+  {
+    "id": 2,
+    "nombre": "Carlos Rodríguez",
+    "email": "carlos.rodriguez@gmail.com",
+    "edad": 35,
+    "genero": "Masculino",
+    "deleted": false
+  },
+  {
+    "id": 3,
+    "nombre": "Ana Martínez",
+    "email": "ana.martinez@gmail.com",
+    "edad": 42,
+    "genero": "Femenino",
+    "deleted": false
+  },
+  {
+    "id": 4,
+    "nombre": "Diego Fernández",
+    "email": "diego.fernandez@gmail.com",
+    "edad": 31,
+    "genero": "Masculino",
+    "deleted": false
+  },
+  {
+    "id": 5,
+    "nombre": "Laura Sánchez",
+    "email": "laura.sanchez@gmail.com",
+    "edad": 26,
+    "genero": "Femenino",
+    "deleted": false
+  }
+]

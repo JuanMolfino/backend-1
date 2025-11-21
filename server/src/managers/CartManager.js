@@ -1,42 +1,53 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
 class CartManager {
   constructor() {
     this.path = path.join(__dirname, "../carts.json");
     this.carts = [];
-    this.loadCarts();
+    this.initialized = false;
   }
 
-  // Cargar carritos desde el archivo
-  loadCarts() {
-    try {
-      if (fs.existsSync(this.path)) {
-        const fileContent = fs.readFileSync(this.path, "utf-8");
-        this.carts = JSON.parse(fileContent);
-      } else {
-        this.carts = [];
-        this.saveCarts();
-      }
-    } catch (error) {
-      console.error("Error al cargar carritos:", error);
-      this.carts = [];
+  // Inicializar cargando carritos desde el archivo
+  async init() {
+    if (!this.initialized) {
+      await this.loadCarts();
+      this.initialized = true;
     }
   }
 
-  // Guardar carritos en el archivo
-  saveCarts() {
+  // Cargar carritos desde el archivo de manera asíncrona
+  async loadCarts() {
     try {
-      fs.writeFileSync(this.path, JSON.stringify(this.carts, null, 2), "utf-8");
+      const fileContent = await fs.readFile(this.path, "utf-8");
+      this.carts = JSON.parse(fileContent);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // El archivo no existe, crear uno vacío
+        this.carts = [];
+        await this.saveCarts();
+      } else {
+        console.error("Error al cargar carritos:", error);
+        throw new Error(`Error al cargar carritos: ${error.message}`);
+      }
+    }
+  }
+
+  // Guardar carritos en el archivo de manera asíncrona
+  async saveCarts() {
+    try {
+      await fs.writeFile(this.path, JSON.stringify(this.carts, null, 2), "utf-8");
       return true;
     } catch (error) {
       console.error("Error al guardar carritos:", error);
-      return false;
+      throw new Error(`Error al guardar carritos: ${error.message}`);
     }
   }
 
   // Crear un nuevo carrito
-  createCart() {
+  async createCart() {
+    await this.init();
+    
     // Generar ID único (luego implementar UUID para mas consistencia )
     const maxId = this.carts.length > 0 
       ? Math.max(...this.carts.map((c) => c.id)) 
@@ -50,20 +61,27 @@ class CartManager {
 
     this.carts.push(newCart);
     
-    if (this.saveCarts()) {
+    try {
+      await this.saveCarts();
       return newCart;
+    } catch (error) {
+      // Revertir el cambio si falla el guardado
+      this.carts.pop();
+      throw error;
     }
-    return null;
   }
 
   // Obtener carrito por ID
-  getCartById(cid) {
+  async getCartById(cid) {
+    await this.init();
     const cart = this.carts.find((c) => c.id === parseInt(cid));
     return cart || null;
   }
 
   // Agregar producto al carrito
-  addProductToCart(cid, pid) {
+  async addProductToCart(cid, pid) {
+    await this.init();
+    
     const cartIndex = this.carts.findIndex((c) => c.id === parseInt(cid));
     
     if (cartIndex === -1) {
@@ -71,6 +89,9 @@ class CartManager {
     }
 
     const cart = this.carts[cartIndex];
+    
+    // Guardar el estado original para poder revertir
+    const originalProducts = JSON.parse(JSON.stringify(cart.products));
     
     // Buscar si el producto ya existe en el carrito
     const existingProductIndex = cart.products.findIndex(
@@ -88,10 +109,14 @@ class CartManager {
       });
     }
 
-    if (this.saveCarts()) {
+    try {
+      await this.saveCarts();
       return cart;
+    } catch (error) {
+      // Revertir cambios si falla el guardado
+      cart.products = originalProducts;
+      throw error;
     }
-    return null;
   }
 }
 

@@ -1,53 +1,66 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 
 class ProductManager {
   constructor() {
     this.path = path.join(__dirname, "../products.json");
     this.products = [];
-    this.loadProducts();
+    this.initialized = false;
   }
 
-  // Cargar productos desde el archivo
-  loadProducts() {
-    try {
-      if (fs.existsSync(this.path)) {
-        const fileContent = fs.readFileSync(this.path, "utf-8");
-        this.products = JSON.parse(fileContent);
-      } else {
-        this.products = [];
-        this.saveProducts();
-      }
-    } catch (error) {
-      console.error("Error al cargar productos:", error);
-      this.products = [];
+  // Inicializar cargando productos desde el archivo
+  async init() {
+    if (!this.initialized) {
+      await this.loadProducts();
+      this.initialized = true;
     }
   }
 
-  // Guardar productos en el archivo
-  saveProducts() {
+  // Cargar productos desde el archivo de manera asíncrona
+  async loadProducts() {
     try {
-      fs.writeFileSync(this.path, JSON.stringify(this.products, null, 2), "utf-8");
+      const fileContent = await fs.readFile(this.path, "utf-8");
+      this.products = JSON.parse(fileContent);
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        // El archivo no existe, crear uno vacío
+        this.products = [];
+        await this.saveProducts();
+      } else {
+        console.error("Error al cargar productos:", error);
+        throw new Error(`Error al cargar productos: ${error.message}`);
+      }
+    }
+  }
+
+  // Guardar productos en el archivo de manera asíncrona
+  async saveProducts() {
+    try {
+      await fs.writeFile(this.path, JSON.stringify(this.products, null, 2), "utf-8");
       return true;
     } catch (error) {
       console.error("Error al guardar productos:", error);
-      return false;
+      throw new Error(`Error al guardar productos: ${error.message}`);
     }
   }
 
   // Obtener todos los productos
-  getProducts() {
+  async getProducts() {
+    await this.init();
     return this.products;
   }
 
   // Obtener producto por ID
-  getProductById(pid) {
+  async getProductById(pid) {
+    await this.init();
     const product = this.products.find((p) => p.id === parseInt(pid));
     return product || null;
   }
 
   // Agregar un nuevo producto
-  addProduct(productData) {
+  async addProduct(productData) {
+    await this.init();
+    
     // Generar ID único
     const maxId = this.products.length > 0 
       ? Math.max(...this.products.map((p) => p.id)) 
@@ -61,19 +74,28 @@ class ProductManager {
 
     this.products.push(newProduct);
     
-    if (this.saveProducts()) {
+    try {
+      await this.saveProducts();
       return newProduct;
+    } catch (error) {
+      // Revertir el cambio si falla el guardado
+      this.products.pop();
+      throw error;
     }
-    return null;
   }
 
   // Actualizar un producto
-  updateProduct(pid, updateData) {
+  async updateProduct(pid, updateData) {
+    await this.init();
+    
     const productIndex = this.products.findIndex((p) => p.id === parseInt(pid));
     
     if (productIndex === -1) {
       return null;
     }
+
+    // Guardar el estado original para poder revertir
+    const originalProduct = { ...this.products[productIndex] };
 
     // No permitir actualizar el ID
     const { id, ...dataToUpdate } = updateData;
@@ -85,23 +107,36 @@ class ProductManager {
       }
     });
 
-    if (this.saveProducts()) {
+    try {
+      await this.saveProducts();
       return this.products[productIndex];
+    } catch (error) {
+      // Revertir cambios si falla el guardado
+      this.products[productIndex] = originalProduct;
+      throw error;
     }
-    return null;
   }
 
   // Eliminar un producto
-  deleteProduct(pid) {
+  async deleteProduct(pid) {
+    await this.init();
+    
     const productIndex = this.products.findIndex((p) => p.id === parseInt(pid));
     
     if (productIndex === -1) {
       return false;
     }
 
-    this.products.splice(productIndex, 1);
+    const deletedProduct = this.products.splice(productIndex, 1)[0];
     
-    return this.saveProducts();
+    try {
+      await this.saveProducts();
+      return true;
+    } catch (error) {
+      // Revertir el cambio si falla el guardado
+      this.products.splice(productIndex, 0, deletedProduct);
+      throw error;
+    }
   }
 }
 

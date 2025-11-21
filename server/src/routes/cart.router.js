@@ -6,10 +6,10 @@ const ProductManager = require("../managers/ProductManager");
 const cartManager = new CartManager();
 const productManager = new ProductManager();
 
-// POST 
-router.post("/", (req, res) => {
+// POST /api/carts - Crear nuevo carrito
+router.post("/", async (req, res) => {
   try {
-    const newCart = cartManager.createCart();
+    const newCart = await cartManager.createCart();
     
     if (newCart) {
       res.status(201).json({ creado: true, cart: newCart });
@@ -17,15 +17,16 @@ router.post("/", (req, res) => {
       res.status(500).json({ error: "Error al crear el carrito" });
     }
   } catch (error) {
-    res.status(500).json({ error: "Error al crear el carrito" });
+    console.error("Error al crear el carrito:", error);
+    res.status(500).json({ error: `Error al crear el carrito: ${error.message}` });
   }
 });
 
-// GET 
-router.get("/:cid", (req, res) => {
+// GET /api/carts/:cid - Obtener carrito por ID
+router.get("/:cid", async (req, res) => {
   try {
     const { cid } = req.params;
-    const cart = cartManager.getCartById(cid);
+    const cart = await cartManager.getCartById(cid);
     
     if (cart) {
       res.status(200).json(cart);
@@ -33,27 +34,30 @@ router.get("/:cid", (req, res) => {
       res.status(404).json({ error: "Carrito no encontrado" });
     }
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener el carrito" });
+    console.error("Error al obtener el carrito:", error);
+    res.status(500).json({ error: `Error al obtener el carrito: ${error.message}` });
   }
 });
 
-// POST  (Agregar producto al carrito)
-router.post("/:cid/product/:pid", (req, res) => {
+// POST /api/carts/:cid/product/:pid - Agregar producto al carrito
+router.post("/:cid/product/:pid", async (req, res) => {
   try {
     const { cid, pid } = req.params;
     
     // Verificar que el producto existe
-    const product = productManager.getProductById(pid);
+    const product = await productManager.getProductById(pid);
     if (!product) {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
+    
     // Verificar que el carrito existe
-    const cart = cartManager.getCartById(cid);
+    const cart = await cartManager.getCartById(cid);
     if (!cart) {
       return res.status(404).json({ error: "Carrito no encontrado" });
     }
+    
     // Agregar producto al carrito
-    const updatedCart = cartManager.addProductToCart(cid, pid);
+    const updatedCart = await cartManager.addProductToCart(cid, pid);
     if (updatedCart) {
       res.status(200).json({ 
         actualizado: true, 
@@ -63,9 +67,11 @@ router.post("/:cid/product/:pid", (req, res) => {
       res.status(500).json({ error: "Error al agregar producto al carrito" });
     }
   } catch (error) {
-    res.status(500).json({ error: "Error al agregar producto al carrito" });
+    console.error("Error al agregar producto al carrito:", error);
+    res.status(500).json({ error: `Error al agregar producto al carrito: ${error.message}` });
   }
 });
 
 module.exports = router;
+
 
